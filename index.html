@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#38bdf8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astrite Calculator</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #e5e7eb;
+    padding: 15px;
+}
+h1 {
+    color: #38bdf8;
+    text-align: center;
+}
+.box, .result {
+    background: #020617;
+    padding: 15px;
+    border-radius: 12px;
+    max-width: 600px;
+    margin: 15px auto;
+}
+label {
+    display: block;
+    margin-top: 10px;
+}
+input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: none;
+    font-size: 15px;
+}
+input[type="checkbox"] {
+    width: auto;
+    transform: scale(1.2);
+    margin-right: 5px;
+}
+button {
+    background: #38bdf8;
+    color: #000;
+    font-weight: bold;
+    margin-top: 15px;
+}
+button:hover {
+    background: #0ea5e9;
+}
+.total {
+    color: #22c55e;
+    font-size: 20px;
+    font-weight: bold;
+}
+.error {
+    border: 2px solid #ef4444;
+}
+.error-text {
+    color: #ef4444;
+    margin-top: 10px;
+}
+ul {
+    margin-left: 20px;
+}
+.small {
+    font-size: 13px;
+    color: #94a3b8;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🧮 Astrite Calculator</h1>
+
+<div class="box">
+    <label>
+        <input type="checkbox" id="monthly"> Thẻ Tháng (90/ngày – tối đa 30 ngày)
+    </label>
+
+    <label>
+        <input type="checkbox" id="podcast"> Podcast (1480 Astrite)
+    </label>
+
+    <label>Astrite Event:
+        <input type="number" id="event" value="0">
+    </label>
+
+    <label>Ngày làm mới Thuyền (tính từ hôm nay):
+        <input type="number" id="shipStart" value="0">
+    </label>
+
+    <label>Ngày làm mới Tháp (tính từ hôm nay):
+        <input type="number" id="towerStart" value="0">
+    </label>
+
+    <label>Số Ngày Mục Tiêu:
+        <input type="number" id="days" value="0">
+    </label>
+
+    <button onclick="calculate()">TÍNH ASTRITE</button>
+
+    <label class="small">Lịch sử 10 lần gần nhất:</label>
+    <select id="history" onchange="loadHistory()">
+        <option value="">-- Chọn lịch sử --</option>
+    </select>
+</div>
+
+<div class="result" id="result"></div>
+
+<script>
+const CYCLE = 28;
+const STORAGE_KEY = "astrite_history";
+
+function addDays(date, days) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+    return d;
+}
+function formatDate(d) {
+    return d.toLocaleDateString("vi-VN");
+}
+
+function validate(days, ship, tower) {
+    if (days <= 0) return "Số Ngày Mục Tiêu phải lớn hơn 0";
+    if (ship < 0) return "Ngày làm mới Thuyền không được âm";
+    if (tower < 0) return "Ngày làm mới Tháp không được âm";
+    return "";
+}
+
+function calculate() {
+    const days = +document.getElementById("days").value;
+    const shipStart = +document.getElementById("shipStart").value;
+    const towerStart = +document.getElementById("towerStart").value;
+    const eventAstrite = +document.getElementById("event").value;
+    const monthly = document.getElementById("monthly").checked;
+    const podcast = document.getElementById("podcast").checked;
+
+    console.group("🧮 Astrite Debug");
+    console.log({ days, shipStart, towerStart, eventAstrite, monthly, podcast });
+
+    const error = validate(days, shipStart, towerStart);
+    if (error) {
+        document.getElementById("result").innerHTML =
+            `<p class="error-text">❌ ${error}</p>`;
+        console.warn(error);
+        console.groupEnd();
+        return;
+    }
+
+    const DAILY = 60, WEEKLY = 160, MONTHLY = 90;
+    const PODCAST = 1480, SHIP = 800, TOWER = 800;
+
+    const today = new Date();
+
+    const daily = days * DAILY;
+    const weekly = Math.floor(days / 7) * WEEKLY;
+    const monthlyAstrite = monthly ? Math.min(days, 30) * MONTHLY : 0;
+    const podcastAstrite = podcast ? PODCAST : 0;
+
+    let shipDates = [];
+    for (let d = shipStart; d <= days && d > 0; d += CYCLE) {
+        shipDates.push(formatDate(addDays(today, d)));
+    }
+
+    let towerDates = [];
+    for (let d = towerStart; d <= days && d > 0; d += CYCLE) {
+        towerDates.push(formatDate(addDays(today, d)));
+    }
+
+    const shipAstrite = shipDates.length * SHIP;
+    const towerAstrite = towerDates.length * TOWER;
+
+    const total =
+        daily + weekly + monthlyAstrite +
+        podcastAstrite + eventAstrite +
+        shipAstrite + towerAstrite;
+
+    console.log("TOTAL:", total);
+    console.groupEnd();
+
+    const output = `
+        <p>📅 Hằng Ngày: ${daily}</p>
+        <p>📆 Hằng Tuần: ${weekly}</p>
+        <p>💳 Thẻ Tháng: ${monthlyAstrite}</p>
+        <p>🎙 Podcast: ${podcastAstrite}</p>
+        <p>🎉 Event: ${eventAstrite}</p>
+
+        <p>🚢 Thuyền (${shipDates.length} lần): ${shipAstrite}</p>
+        <ul>${shipDates.map(d => `<li>${d}</li>`).join("")}</ul>
+
+        <p>🏰 Tháp (${towerDates.length} lần): ${towerAstrite}</p>
+        <ul>${towerDates.map(d => `<li>${d}</li>`).join("")}</ul>
+
+        <hr>
+        <p class="total">TỔNG ASTRITE: ${total}</p>
+    `;
+
+    document.getElementById("result").innerHTML = output;
+
+    saveHistory(output);
+}
+
+function saveHistory(content) {
+    let history = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    history.unshift({
+        time: new Date().toLocaleString("vi-VN"),
+        content
+    });
+    history = history.slice(0, 10);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    loadHistoryList();
+}
+
+function loadHistoryList() {
+    let history = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const select = document.getElementById("history");
+    select.innerHTML = '<option value="">-- Chọn lịch sử --</option>';
+    history.forEach((h, i) => {
+        select.innerHTML += `<option value="${i}">${h.time}</option>`;
+    });
+}
+
+function loadHistory() {
+    let history = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const index = document.getElementById("history").value;
+    if (index !== "") {
+        document.getElementById("result").innerHTML = history[index].content;
+    }
+}
+
+loadHistoryList();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+    .then(() => console.log("✅ Service Worker registered"))
+    .catch(err => console.error("❌ SW failed", err));
+}
+</script>
+</body>
+</html>
