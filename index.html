@@ -238,8 +238,67 @@ loadHistoryList();
 <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js")
-    .then(() => console.log("✅ Service Worker registered"))
-    .catch(err => console.error("❌ SW failed", err));
+    .then(reg => {
+
+      // Có SW mới chờ update
+      if (reg.waiting) {
+        showUpdateBanner(reg);
+      }
+
+      reg.addEventListener("updatefound", () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "installed" &&
+              navigator.serviceWorker.controller) {
+            showUpdateBanner(reg);
+          }
+        });
+      });
+    });
+
+  function showUpdateBanner(reg) {
+    if (document.getElementById("update-banner")) return;
+
+    const banner = document.createElement("div");
+    banner.id = "update-banner";
+    banner.innerHTML = `
+      <div style="
+        position:fixed;
+        bottom:15px;
+        left:50%;
+        transform:translateX(-50%);
+        background:#38bdf8;
+        color:#000;
+        padding:12px 16px;
+        border-radius:10px;
+        font-weight:bold;
+        z-index:9999;
+        box-shadow:0 4px 10px rgba(0,0,0,.3);
+      ">
+        🚀 Có bản cập nhật mới
+        <button id="reload-btn"
+          style="
+            margin-left:10px;
+            padding:6px 10px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+            font-weight:bold;
+          ">
+          Cập nhật
+        </button>
+      </div>
+    `;
+    document.body.appendChild(banner);
+
+    document.getElementById("reload-btn").onclick = () => {
+      reg.waiting.postMessage({ type: "SKIP_WAITING" });
+    };
+  }
+
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    window.location.reload();
+  });
 }
 </script>
 </body>
