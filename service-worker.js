@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v1.0.0"; // ⬅️ ĐỔI VERSION MỖI LẦN UPDATE
+const CACHE_VERSION = "v1.0.1"; // ⬅️ ĐỔI VERSION MỖI LẦN UPDATE
 const CACHE_NAME = `astrite-cache-${CACHE_VERSION}`;
 
 const FILES_TO_CACHE = [
