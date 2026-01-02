@@ -1,5 +1,6 @@
-const CACHE_VERSION = "v1.0.2"; // ⬅️ ĐỔI VERSION MỖI LẦN UPDATE
-const CACHE_NAME = `astrite-cache-${CACHE_VERSION}`;
+const CACHE_VERSION = "v1.0.0"; // ⬅️ PHẢI TRÙNG VERSION HTML
+const CACHE_PREFIX = "astrite-cache-";
+const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
 const FILES_TO_CACHE = [
   "./",
@@ -7,23 +8,22 @@ const FILES_TO_CACHE = [
   "./manifest.json"
 ];
 
-// Cài đặt
+// Install
 self.addEventListener("install", event => {
-  self.skipWaiting(); // ⬅️ nhận SW mới ngay
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(FILES_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES_TO_CACHE))
   );
 });
 
-// Kích hoạt
+// Activate – 🧹 DỌN CACHE CŨ
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
         keys.map(key => {
-          if (key !== CACHE_NAME) {
+          if (key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME) {
+            console.log("🧹 Delete old cache:", key);
             return caches.delete(key);
           }
         })
@@ -35,21 +35,20 @@ self.addEventListener("activate", event => {
 
 // Fetch
 self.addEventListener("fetch", event => {
-  // 🚫 KHÔNG cache index.html → luôn lấy bản mới
+  // index.html luôn lấy mới
   if (event.request.url.includes("index.html")) {
     event.respondWith(fetch(event.request));
     return;
   }
 
   event.respondWith(
-    caches.match(event.request).then(res => {
-      return res || fetch(event.request);
-    })
+    caches.match(event.request).then(res => res || fetch(event.request))
   );
 });
 
+// Nhận lệnh update
 self.addEventListener("message", event => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
+  if (event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
 });

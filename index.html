@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
 <link rel="manifest" href="manifest.json">
+<meta name="app-version" content="1.0.0">
 <meta name="theme-color" content="#38bdf8">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -109,6 +110,10 @@ ul {
         <option value="">-- Chọn lịch sử --</option>
     </select>
 </div>
+
+<p id="app-version"
+   style="text-align:center;font-size:13px;color:#94a3b8;margin-top:10px;">
+</p>
 
 <div class="result" id="result"></div>
 
@@ -235,6 +240,7 @@ function loadHistory() {
 
 loadHistoryList();
 </script>
+
 <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js")
@@ -301,5 +307,15 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
+
+<script>
+const version = document
+  .querySelector('meta[name="app-version"]')
+  .getAttribute("content");
+
+document.getElementById("app-version").innerText =
+  `Phiên bản: v${version}`;
+</script>
+
 </body>
 </html>
