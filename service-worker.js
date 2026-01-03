@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v1.0.0"; // ⬅️ PHẢI TRÙNG VERSION HTML
+const CACHE_VERSION = "v1.0.1"; // ⬅️ PHẢI TRÙNG VERSION HTML
 const CACHE_PREFIX = "astrite-cache-";
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
