@@ -1,5 +1,5 @@
-const CACHE_VERSION = "v1.0.1"; // ⬅️ PHẢI TRÙNG VERSION HTML
-const CACHE_PREFIX = "astrite-cache-";
+const CACHE_VERSION = "v1.0.4"; // ⬅️ PHẢI TRÙNG VERSION HTML
+const CACHE_PREFIX = "astrite-cache-v1";
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
 const FILES_TO_CACHE = [
