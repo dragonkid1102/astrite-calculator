@@ -1,8 +1,19 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+<!-- PWA Manifest -->
 <link rel="manifest" href="manifest.json">
-<meta name="app-version" content="1.0.4">
+
+<!-- Android / Chrome -->
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png">
+
+<!-- iOS -->
+<link rel="apple-touch-icon" href="assets/icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Astrite">
+
+<meta name="app-version" content="1.0.5">
 <meta name="theme-color" content="#38bdf8">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -558,6 +569,52 @@ function loadCheckboxState() {
 	toggleMonthly();
 }
 
+function renderResult(result, timeText = null) {
+    return `
+        ${timeText ? `<p><b>🕒 Thời gian:</b> ${timeText}</p>` : ""}
+
+        <p>
+            <img src="assets/icons/daily.png" class="icon-img">
+            Hằng Ngày: ${result.daily}
+        </p>
+
+        <p>
+            <img src="assets/icons/weekly.png" class="icon-img">
+            Hằng Tuần: ${result.weekly}
+        </p>
+
+        <p>
+            <img src="assets/icons/monthly.png" class="icon-img">
+            Thẻ Tháng: ${result.monthly}
+        </p>
+
+        <p>
+            <img src="assets/icons/podcast.png" class="icon-img">
+            Podcast: ${result.podcast}
+        </p>
+
+        <p>
+            <img src="assets/icons/event.png" class="icon-img">
+            Event Astrite: ${result.event}
+        </p>
+
+        <p>
+            <img src="assets/icons/ship.png" class="icon-img">
+            Thuyền (${result.shipDates.length} lần): ${result.ship}
+        </p>
+        <ul>${result.shipDates.map(d => `<li>${d}</li>`).join("")}</ul>
+
+        <p>
+            <img src="assets/icons/tower.png" class="icon-img">
+            Tháp (${result.towerDates.length} lần): ${result.tower}
+        </p>
+        <ul>${result.towerDates.map(d => `<li>${d}</li>`).join("")}</ul>
+
+        <hr>
+        <p class="total">TỔNG ASTRITE: ${result.total}</p>
+    `;
+}
+
 function calculate() {
     const days = +document.getElementById("days").value;
     const enableShip = document.getElementById("enableShip").checked;
@@ -638,70 +695,42 @@ function calculate() {
     const shipAstrite = shipDates.length * SHIP;
     const towerAstrite = towerDates.length * TOWER;
 
-	/* ===== 1 Tính Toán ===== */
+	/* ===== Tính Toán ===== */
     const total =
         daily + weekly + monthlyAstrite +
         podcastAstrite + eventAstrite +
         shipAstrite + towerAstrite;
+		
+	const resultData = {
+		daily,
+		weekly,
+		monthly: monthlyAstrite,
+		podcast: podcastAstrite,
+		event: eventAstrite,
+		ship: shipAstrite,
+		shipDates,
+		tower: towerAstrite,
+		towerDates,
+		total
+	};
+
+	document.getElementById("result").innerHTML =
+		renderResult(resultData);
 
     console.log("TOTAL:", total);
     console.groupEnd();
-	/* ===== 2 HIỂN THỊ KẾT QUẢ của Hiện Tại ===== */
-	const output = `
-		<p>
-		<img src="assets/icons/daily.png" class="icon-img" alt="">
-		Hằng Ngày: ${daily}
-		</p>
-	
-		<p>
-		<img src="assets/icons/weekly.png" class="icon-img" alt="">
-		Hằng Tuần: ${weekly}
-		</p>
-	
-		<p>
-		<img src="assets/icons/monthly.png" class="icon-img" alt="">
-		Thẻ Tháng: ${monthlyAstrite}
-		</p>
-	
-		<p>
-		<img src="assets/icons/podcast.png" class="icon-img" alt="">
-		Podcast: ${podcastAstrite}
-		</p>
-	
-		<p>
-		<img src="assets/icons/event.png" class="icon-img" alt="">
-		Event Astrite: ${eventAstrite}
-		</p>
-	
-		<p>
-		<img src="assets/icons/ship.png" class="icon-img" alt="">
-		Thuyền (${shipDates.length} lần): ${shipAstrite}
-		</p>
-		<ul>${shipDates.map(d => `<li>${d}</li>`).join("")}</ul>
-	
-		<p>
-		<img src="assets/icons/tower.png" class="icon-img" alt="">
-		Tháp (${towerDates.length} lần): ${towerAstrite}
-		</p>
-		<ul>${towerDates.map(d => `<li>${d}</li>`).join("")}</ul>
-	
-		<hr>
-		<p class="total">TỔNG ASTRITE: ${total}</p>
-	`;
-	/* ===== 3 Render ra màn hình ===== */
-    document.getElementById("result").innerHTML = output;
 
-    saveHistory({
-    daily,
-    weekly,
-    monthlyAstrite,
-    podcastAstrite,
-    eventAstrite,
-    shipAstrite,
-    towerAstrite,
-    shipDates,
-    towerDates,
-    total
+	saveHistory({
+		daily,
+		weekly,
+		monthly: monthlyAstrite,
+		podcast: podcastAstrite,
+		event: eventAstrite,
+		ship: shipAstrite,
+		shipDates,
+		tower: towerAstrite,
+		towerDates,
+		total
 	});
 }
 
@@ -751,27 +780,31 @@ function loadHistory() {
     const index = document.getElementById("history").value;
     if (index === "") return;
 
+    // ✅ KHAI BÁO TRƯỚC
     const h = history[index];
 
     /* ===== NẠP LẠI INPUT ===== */
     document.getElementById("days").value = h.input.days;
-	updateDaysHighlight();
-	document.getElementById("eventCount").value = h.input.eventCount || 0;
-	renderEventInputs();
-	
-	if (Array.isArray(h.input.eventValues)) {
-		document.querySelectorAll(".eventValue").forEach((input, i) => {
-			input.value = h.input.eventValues[i] ?? 0;
-		});
-	}
+    updateDaysHighlight();
+
+    document.getElementById("eventCount").value = h.input.eventCount || 0;
+    renderEventInputs();
+
+    if (Array.isArray(h.input.eventValues)) {
+        document.querySelectorAll(".eventValue").forEach((input, i) => {
+            input.value = h.input.eventValues[i] ?? 0;
+        });
+    }
 
     document.getElementById("monthly").checked = h.input.monthly;
-    document.getElementById("podcast").checked = h.input.podcast;
-	togglePodcast();
+    toggleMonthly();
 
-	if (h.input.podcastCount !== undefined) {
-		document.getElementById("podcastCount").value = h.input.podcastCount;
-	}
+    document.getElementById("podcast").checked = h.input.podcast;
+    togglePodcast();
+
+    if (h.input.podcastCount !== undefined) {
+        document.getElementById("podcastCount").value = h.input.podcastCount;
+    }
 
     document.getElementById("enableShip").checked = h.input.enableShip;
     document.getElementById("shipStart").value = h.input.shipStart;
@@ -783,47 +816,9 @@ function loadHistory() {
 
     saveCheckboxState();
 
-    /* ===== 1 HIỂN THỊ KẾT QUẢ của Lịch Sử ===== */
-    const output = `
-        <p><b>🕒 Thời gian:</b> ${h.time}</p>
-
-        <p>
-		<img src="assets/icons/daily.png" class="icon-img" alt="">
-		Hằng Ngày: ${h.result.daily}
-		</p>
-        <p>
-		<img src="assets/icons/weekly.png" class="icon-img" alt="">
-		Hằng Tuần: ${h.result.weekly}</p>
-        <p>
-		<img src="assets/icons/monthly.png" class="icon-img" alt="">
-		Thẻ Tháng: ${h.result.monthlyAstrite}
-		</p>
-        <p>
-		<img src="assets/icons/podcast.png" class="icon-img" alt="">
-		Podcast: ${h.result.podcastAstrite}
-		</p>
-        <p>
-		<img src="assets/icons/event.png" class="icon-img" alt="">
-		Event: ${h.result.eventAstrite}
-		</p>
-
-        <p>
-		<img src="assets/icons/ship.png" class="icon-img" alt="">
-		Thuyền (${h.result.shipDates.length} lần): ${h.result.shipAstrite}
-		</p>
-        <ul>${h.result.shipDates.map(d => `<li>${d}</li>`).join("")}</ul>
-
-        <p>
-		<img src="assets/icons/tower.png" class="icon-img" alt="">
-		Tháp (${h.result.towerDates.length} lần): ${h.result.towerAstrite}
-		</p>
-        <ul>${h.result.towerDates.map(d => `<li>${d}</li>`).join("")}</ul>
-
-        <hr>
-        <p class="total">TỔNG ASTRITE: ${h.result.total}</p>
-    `;
-	/* ===== 2 Render ra màn hình ===== */
-    document.getElementById("result").innerHTML = output;
+    /* ===== HIỂN THỊ KẾT QUẢ ===== */
+    document.getElementById("result").innerHTML =
+        renderResult(h.result, h.time);
 }
 
 function deleteSelectedHistory() {
